@@ -311,39 +311,22 @@
     });
 
     // 6. Explicit Stop Button Event
-    stopBtn.addEventListener('click', () => {
-      // If continuous mode was on, turn it off for consistency
-      if (isContinuousMode) {
-        modeToggle.checked = false;
-        isContinuousMode = false;
-      }
-      stopCamera();
-      showToast('カメラを停止しました');
-    });
-
-    // 7. Download Handler
-    downloadBtn.addEventListener('click', () => {
-      const dataUrl = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `webcam-capture-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    });
-
-    // 8. Gallery Management
+    <!-- 8. Gallery Management -->
     function addToGallery(dataUrl) {
       capturedHistory.unshift(dataUrl);
       if (galleryEmpty) galleryEmpty.remove();
 
       galleryCount.textContent = `${capturedHistory.length} 枚`;
 
+      // 履歴用ラッパー要素
+      const itemWrapper = document.createElement('div');
+      itemWrapper.className = 'relative group shrink-0';
+
       const img = document.createElement('img');
       img.src = dataUrl;
-      img.className = 'w-16 h-12 object-cover rounded-lg border border-slate-700 hover:border-indigo-500 cursor-pointer transition-all hover:scale-105 shrink-0';
+      img.className = 'w-16 h-12 object-cover rounded-lg border border-slate-700 hover:border-indigo-500 cursor-pointer transition-all hover:scale-105';
       
-      // Click thumbnail to display back on main Canvas
+      // サムネイルクリックでメインCanvasに復元
       img.addEventListener('click', () => {
         const tempImg = new Image();
         tempImg.onload = () => {
@@ -357,7 +340,24 @@
         tempImg.src = dataUrl;
       });
 
-      gallery.prepend(img);
+      // 個別ダウンロードボタン
+      const dlBtn = document.createElement('button');
+      dlBtn.className = 'absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-[10px] flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100';
+      dlBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
+      dlBtn.title = 'この写真をダウンロード';
+      dlBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // サムネイルのクリックイベント（プレビュー復元）を発生させない
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `webcam-capture-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+
+      itemWrapper.appendChild(img);
+      itemWrapper.appendChild(dlBtn);
+      gallery.prepend(itemWrapper);
     }
 
     // 9. Toast Notification Helper
